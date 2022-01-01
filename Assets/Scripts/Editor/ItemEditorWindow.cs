@@ -13,18 +13,22 @@ public class ItemEditorWindow : EditorWindow
 	Vector2 scrollPosition;
 	ItemData itemData;
 	[SerializeField] int selectedIndex;
+	[SerializeField] string itemDataPath;
 
 	void OnEnable()
 	{
 		this.skin = AssetDatabase.LoadAssetAtPath<GUISkin>("Assets/Scripts/Editor/Editor Resources/ItemEditorGUISkin.guiskin");
-		this.itemData = Resources.Load<ItemData>("ItemData").Clone();
+		var defaultData = Resources.Load<ItemData>("ItemData");
+		this.itemData = defaultData.Clone();
+		this.itemDataPath = AssetDatabase.GetAssetPath(defaultData);
 	}
 
 	void OnGUI()
 	{
 		using (new EditorGUILayout.VerticalScope(this.skin.GetStyle("Header")))
 		{
-			EditorGUILayout.LabelField(AssetDatabase.GetAssetPath(itemData));
+			EditorGUILayout.LabelField(itemDataPath);
+
 			Undo.RecordObject(itemData, "Modify FileName or Caption of ItemData");
 			itemData.fileName = EditorGUILayout.TextField(itemData.fileName);
 			itemData.fileCaption = EditorGUILayout.TextArea(itemData.fileCaption, GUILayout.Height(EditorGUIUtility.singleLineHeight * 2f));
@@ -46,12 +50,12 @@ public class ItemEditorWindow : EditorWindow
 
 				if (GUILayout.Button("元に戻す"))
 				{
-					this.itemData = Resources.Load<ItemData>("ItemData").Clone();
+					this.itemData = AssetDatabase.LoadAssetAtPath<ItemData>(this.itemDataPath).Clone();
 					EditorGUIUtility.editingTextField = false;
 				}
 				if (GUILayout.Button("保存"))
 				{
-					var data = Resources.Load<ItemData>("ItemData");
+					var data = AssetDatabase.LoadAssetAtPath<ItemData>(this.itemDataPath);
 					EditorUtility.CopySerialized(this.itemData, data);
 					EditorUtility.SetDirty(data);
 					AssetDatabase.SaveAssets();
@@ -94,6 +98,33 @@ public class ItemEditorWindow : EditorWindow
 				}
 				GUILayout.FlexibleSpace();
 			}
+		}
+
+		if (Event.current.type == EventType.DragUpdated)
+		{
+			if (DragAndDrop.objectReferences != null &&
+				DragAndDrop.objectReferences.Length > 0 &&
+				DragAndDrop.objectReferences[0] is ItemData)
+			{
+				DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+				Event.current.Use();
+			}
+		}
+		else if (Event.current.type == EventType.DragPerform)
+		{
+			Undo.RecordObject(this, "Change ItemData");
+			this.itemData = ((ItemData)DragAndDrop.objectReferences[0]).Clone();
+			this.itemDataPath = DragAndDrop.paths[0];
+			DragAndDrop.AcceptDrag();
+			Event.current.Use();
+		}
+
+		if (DragAndDrop.visualMode == DragAndDropVisualMode.Copy)
+		{
+			var rect = new Rect(Vector2.zero, this.position.size);
+			var bgColor = Color.white * new Color(1f, 1f, 1f, 0.2f);
+			EditorGUI.DrawRect(rect, bgColor);
+			EditorGUI.LabelField(rect, "ここにアイテムデータをドラッグ＆ドロップしてください", this.skin.GetStyle("D&D"));
 		}
 	}
 }
