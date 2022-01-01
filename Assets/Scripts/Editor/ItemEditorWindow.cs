@@ -17,7 +17,7 @@ public class ItemEditorWindow : EditorWindow
 	void OnEnable()
 	{
 		this.skin = AssetDatabase.LoadAssetAtPath<GUISkin>("Assets/Scripts/Editor/Editor Resources/ItemEditorGUISkin.guiskin");
-		this.itemData = Resources.Load<ItemData>("ItemData");
+		this.itemData = Resources.Load<ItemData>("ItemData").Clone();
 	}
 
 	void OnGUI()
@@ -32,7 +32,6 @@ public class ItemEditorWindow : EditorWindow
 			{
 				if (GUILayout.Button("アイテムを追加"))
 				{
-					Undo.RecordObject(itemData, "Add Item");
 					int itemLength = this.itemData.items.Length;
 					System.Array.Resize(ref this.itemData.items, itemLength + 1);
 					this.itemData.items[itemLength] = new ItemData.Item()
@@ -42,6 +41,19 @@ public class ItemEditorWindow : EditorWindow
 					};
 				}
 				GUILayout.FlexibleSpace();
+
+				if (GUILayout.Button("元に戻す"))
+				{
+					this.itemData = Resources.Load<ItemData>("ItemData").Clone();
+					EditorGUIUtility.editingTextField = false;
+				}
+				if (GUILayout.Button("保存"))
+				{
+					var data = Resources.Load<ItemData>("ItemData");
+					EditorUtility.CopySerialized(this.itemData, data);
+					EditorUtility.SetDirty(data);
+					AssetDatabase.SaveAssets();
+				}
 			}
 		}
 

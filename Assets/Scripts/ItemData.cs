@@ -26,4 +26,9 @@ public class ItemData : ScriptableObject
 	public string fileName;
 	public string fileCaption;
 	public Item[] items;
+
+	public ItemData Clone()
+	{
+		return Instantiate(this);
+	}
 }
