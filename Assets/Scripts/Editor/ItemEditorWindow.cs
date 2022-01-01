@@ -12,7 +12,7 @@ public class ItemEditorWindow : EditorWindow
 	GUISkin skin;
 	Vector2 scrollPosition;
 	ItemData itemData;
-	int selectedIndex;
+	[SerializeField] int selectedIndex;
 
 	void OnEnable()
 	{
@@ -25,6 +25,7 @@ public class ItemEditorWindow : EditorWindow
 		using (new EditorGUILayout.VerticalScope(this.skin.GetStyle("Header")))
 		{
 			EditorGUILayout.LabelField(AssetDatabase.GetAssetPath(itemData));
+			Undo.RecordObject(itemData, "Modify FileName or Caption of ItemData");
 			itemData.fileName = EditorGUILayout.TextField(itemData.fileName);
 			itemData.fileCaption = EditorGUILayout.TextArea(itemData.fileCaption, GUILayout.Height(EditorGUIUtility.singleLineHeight * 2f));
 
@@ -32,6 +33,7 @@ public class ItemEditorWindow : EditorWindow
 			{
 				if (GUILayout.Button("アイテムを追加"))
 				{
+					Undo.RecordObject(itemData, "Add Item");
 					int itemLength = this.itemData.items.Length;
 					System.Array.Resize(ref this.itemData.items, itemLength + 1);
 					this.itemData.items[itemLength] = new ItemData.Item()
@@ -71,7 +73,10 @@ public class ItemEditorWindow : EditorWindow
 						EditorGUILayout.LabelField(data.id.ToString(), GUILayout.MaxWidth(50f));
 						EditorGUILayout.LabelField(data.name, GUILayout.MaxWidth(200f));
 						if (GUILayout.Button("編集", GUILayout.MaxWidth(50f)))
+						{
+							Undo.RecordObject(this, "Select Item");
 							this.selectedIndex = i;
+						}
 					}
 				}
 			}
@@ -80,6 +85,7 @@ public class ItemEditorWindow : EditorWindow
 			{
 				if (0 <= this.selectedIndex && this.selectedIndex < this.itemData.items.Length)
 				{
+					Undo.RecordObject(itemData, "Modify ItemData at " + this.selectedIndex);
 					var selectedItem = this.itemData.items[this.selectedIndex];
 					selectedItem.id = EditorGUILayout.IntField("ID", selectedItem.id);
 					selectedItem.name = EditorGUILayout.TextField("アイテム名", selectedItem.name);
