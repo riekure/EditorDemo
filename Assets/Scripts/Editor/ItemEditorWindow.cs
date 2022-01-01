@@ -4,60 +4,78 @@ using UnityEngine;
 public class ItemEditorWindow : EditorWindow
 {
 
-    [MenuItem("Window/Demo/ItemEditorWindow")]
-    static public void CreateWindow()
-    {
-        EditorWindow.GetWindow<ItemEditorWindow>();
-    }
-    Vector2 scrollPosition;
-    string fileTitle = "File Title";
-    string fileCaption = "File Caption";
+	[MenuItem("Window/Demo/ItemEditorWindow")]
+	static public void CreateWindow()
+	{
+		EditorWindow.GetWindow<ItemEditorWindow>();
+	}
+	GUISkin skin;
+	Vector2 scrollPosition;
+	ItemData itemData;
+	int selectedIndex;
 
-    void OnGUI()
-    {
-        EditorGUILayout.LabelField("100000");
-        EditorGUILayout.LabelField("アイテム名");
-        GUILayout.Button("編集");
+	void OnEnable()
+	{
+		this.skin = AssetDatabase.LoadAssetAtPath<GUISkin>("Assets/Scripts/Editor/Editor Resources/ItemEditorGUISkin.guiskin");
+		this.itemData = Resources.Load<ItemData>("ItemData");
+	}
 
-        // 水平に並べる
-        using (new EditorGUILayout.HorizontalScope())
-        {
-            EditorGUILayout.LabelField("100000");
-            EditorGUILayout.LabelField("アイテム名");
-            GUILayout.Button("編集");
-        }
+	void OnGUI()
+	{
+		using (new EditorGUILayout.VerticalScope(this.skin.GetStyle("Header")))
+		{
+			EditorGUILayout.LabelField(AssetDatabase.GetAssetPath(itemData));
+			itemData.fileName = EditorGUILayout.TextField(itemData.fileName);
+			itemData.fileCaption = EditorGUILayout.TextArea(itemData.fileCaption, GUILayout.Height(EditorGUIUtility.singleLineHeight * 2f));
 
-        // スクロール
-        using (var scroll = new EditorGUILayout.ScrollViewScope(this.scrollPosition))
-        {
-            this.scrollPosition = scroll.scrollPosition;
+			using (new EditorGUILayout.HorizontalScope())
+			{
+				if (GUILayout.Button("アイテムを追加"))
+				{
+					Undo.RecordObject(itemData, "Add Item");
+					int itemLength = this.itemData.items.Length;
+					System.Array.Resize(ref this.itemData.items, itemLength + 1);
+					this.itemData.items[itemLength] = new ItemData.Item()
+					{
+						name = "名前を入力してください",
+						caption = "説明文",
+					};
+				}
+				GUILayout.FlexibleSpace();
+			}
+		}
 
-            for (int i = 0; i < 100; i++)
-            {
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    EditorGUILayout.LabelField("100000", GUILayout.MaxWidth(50f));
-                    EditorGUILayout.LabelField("アイテム名", GUILayout.MaxWidth(200f));
-                    GUILayout.Button("編集", GUILayout.MaxWidth(50f));
-                }
-            }
-        }
+		using (new EditorGUILayout.HorizontalScope())
+		{
+			using (var scroll = new EditorGUILayout.ScrollViewScope(scrollPosition, GUILayout.MinWidth(320f)))
+			{
+				scrollPosition = scroll.scrollPosition;
 
-        // VerticalScopeで領域管理
-        using (new EditorGUILayout.VerticalScope())
-        {
-            EditorGUILayout.LabelField("Map1Item.json");
-            fileTitle = EditorGUILayout.TextField(fileTitle);
-            fileCaption = EditorGUILayout.TextArea(fileCaption, GUILayout.Height(EditorGUIUtility.singleLineHeight * 2f));
+				for (int i = 0; i < this.itemData.items.Length; ++i)
+				{
+					var data = this.itemData.items[i];
+					using (new EditorGUILayout.HorizontalScope())
+					{
+						EditorGUILayout.LabelField(data.id.ToString(), GUILayout.MaxWidth(50f));
+						EditorGUILayout.LabelField(data.name, GUILayout.MaxWidth(200f));
+						if (GUILayout.Button("編集", GUILayout.MaxWidth(50f)))
+							this.selectedIndex = i;
+					}
+				}
+			}
 
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                GUILayout.Button("アイテムを追加");
-                GUILayout.Button("もとに戻す");
-                GUILayout.Button("保存");
-            }
-
-            // 省略
-        }
-    }
+			using (new EditorGUILayout.VerticalScope(this.skin.GetStyle("Inspector")))
+			{
+				if (0 <= this.selectedIndex && this.selectedIndex < this.itemData.items.Length)
+				{
+					var selectedItem = this.itemData.items[this.selectedIndex];
+					selectedItem.id = EditorGUILayout.IntField("ID", selectedItem.id);
+					selectedItem.name = EditorGUILayout.TextField("アイテム名", selectedItem.name);
+					selectedItem.type = (ItemType)EditorGUILayout.EnumPopup("アイテムタイプ", selectedItem.type);
+					selectedItem.caption = EditorGUILayout.TextArea(selectedItem.caption, GUILayout.Height(EditorGUIUtility.singleLineHeight * 4f));
+				}
+				GUILayout.FlexibleSpace();
+			}
+		}
+	}
 }
