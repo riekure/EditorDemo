@@ -4,4 +4,6 @@ using UnityEngine;
 
 public class MyComponent : MonoBehaviour
 {
+    [SerializeField]
+    ItemData.Item item;
 }
