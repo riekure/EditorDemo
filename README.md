@@ -77,7 +77,7 @@
 
 ### Assets/Scripts/MenuComponent.cs
 
-![image](https://user-images.githubusercontent.com/10719941/147884454-1f7fba93-fb08-4272-9daf-03f06923ed56.png)
+![image](https://user-images.githubusercontent.com/10719941/147884533-953cbb91-faa0-4eeb-9292-761ffad6b5c7.png)
 
 ##### 右クリック
 
